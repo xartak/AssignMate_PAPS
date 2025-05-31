@@ -1,0 +1,71 @@
+openapi: 3.0.1
+info:
+  title: AssignMate Mail API
+  version: 1.0.0
+  description: |
+    REST-эндпоинт для отправки email через SendGrid.  
+    Возвращает 202, если письмо принято,  
+    400/401/500 при ошибках.
+
+servers:
+  - url: https://api.assignmate.edu/v1
+
+paths:
+  /mail/send:
+    post:
+      summary: "Отправка email-уведомления"
+      description: |
+        Принимает JSON с полями:
+          - to (email получателя)
+          - subject (тема)
+          - templateId (ID шаблона в SendGrid)
+          - dynamicData (ключ:значение для шаблона)
+        В ответе:
+          - 202 Accepted: SendGrid принял запрос
+          - 400 Bad Request: ошибка в запросе
+          - 401 Unauthorized: неверный API-ключ
+          - 500 Internal Server Error: внутренняя ошибка
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - to
+                - subject
+                - templateId
+              properties:
+                to:
+                  type: string
+                  format: email
+                  description: "Email получателя"
+                subject:
+                  type: string
+                  description: "Тема письма"
+                templateId:
+                  type: string
+                  description: "ID шаблона в SendGrid"
+                dynamicData:
+                  type: object
+                  description: "Параметры для подстановки в шаблон"
+                  additionalProperties:
+                    type: string
+      responses:
+        '202':
+          description: "Письмо принято на отправку"
+        '400':
+          description: "Неверный формат запроса"
+        '401':
+          description: "Неавторизован (ошибка API-ключа)"
+        '500':
+          description: "Внутренняя ошибка сервера"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
