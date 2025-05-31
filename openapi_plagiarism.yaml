@@ -1,0 +1,83 @@
+openapi: 3.0.1
+info:
+  title: AssignMate Plagiarism API
+  version: 1.0.0
+  description: |
+    REST-эндпоинт для отправки документа на внешнюю проверку.
+    Принимает multipart/form-data и возвращает результат в JSON.
+
+servers:
+  - url: https://api.assignmate.edu/v1
+
+paths:
+  /plagiarism/check:
+    post:
+      summary: "Отправка документа на проверку на плагиат"
+      description: |
+        Принимает два поля:
+          - documentId (ID работы в AssignMate)
+          - file (binary-файл: PDF, DOCX и т.д.)
+        Возвращает JSON:
+          - documentId (string)
+          - plagiarismScore (float, 0.0–1.0)
+          - reportUrl (URL отчёта)
+          - status (pending, completed, failed)
+        Коды ответов:
+          - 200 OK: проверка завершена, результат доступен
+          - 400 Bad Request: отсутствует documentId или файл
+          - 503 Service Unavailable: внешний сервис недоступен
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - documentId
+                - file
+              properties:
+                documentId:
+                  type: string
+                  description: "Внутренний ID работы"
+                file:
+                  type: string
+                  format: binary
+                  description: "Файл документа (PDF, DOCX)"
+      responses:
+        '200':
+          description: "Результат проверки (JSON)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documentId:
+                    type: string
+                  plagiarismScore:
+                    type: number
+                    format: float
+                    description: "Процент совпадений (0.0–1.0)"
+                  reportUrl:
+                    type: string
+                    format: uri
+                    description: "Ссылка на отчёт"
+                  status:
+                    type: string
+                    enum:
+                      - pending
+                      - completed
+                      - failed
+        '400':
+          description: "Некорректный запрос: отсутствует documentId или файл"
+        '503':
+          description: "Сервис проверки недоступен"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
